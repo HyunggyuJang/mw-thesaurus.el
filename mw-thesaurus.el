@@ -183,6 +183,7 @@ Take XML-DATA, Returns multi-line text in ‘org-mode’ format."
 
 (defun mw-thesaurus-get-original-word (beginning end)
   "Get a word to look for from the user.
+
 `BEGINNING' and `END' correspond to the selected text (if selected).
 If presented, the selected text will be used.
 Otherwise, user must provide additional information."
