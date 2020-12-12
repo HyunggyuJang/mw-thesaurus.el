@@ -40,7 +40,6 @@
 (require 'xml)
 (require 'org)
 (require 'dash)
-(require 's)
 
 (defgroup mw-thesaurus nil
   "Merriam-Webster Thesaurus"
@@ -113,7 +112,8 @@ Usage: `(mw-thesaurus--get-xml-node html-root '(html head title))`"
                 ((eq tag-type 'ant) "Antonyms")
                 (t "Unknown type"))))
     (when (and content (< 0 (length content)))
-      (string-join (list "\n*** " title ":\n    " (s-replace ";" "\n   " content)) ""))))
+      (string-join (list "\n*** " title ":\n    "
+			 (replace-regexp-in-string ";" (or (and org-indent-mode "\n") "\n   ") content t t)) ""))))
 
 (defun mw-thesaurus--third-lvl (article)
   "Third level of ARTICLE."
@@ -189,7 +189,7 @@ If presented, the selected text will be used.
 Otherwise, user must provide additional information."
   (if (use-region-p)
       (buffer-substring-no-properties beginning end)
-    (read-string "Word to fetch: ")))
+    (read-string "Word to look up: ")))
 
 (defun mw-thesaurus-is-at-the-beginning-of-word (word-point)
   "Predicate to check whether `WORD-POINT' points to the beginning of the word."
@@ -207,22 +207,25 @@ Otherwise, user must provide additional information."
     (< (point) word-point)))
 
 ;;;###autoload
-(defun mw-thesaurus-lookup-word-dwim ()
-  "Look up a thesaurus definition on demand using Merriam-Webster online dictionary."
+(defun mw-thesaurus-lookup-dwim ()
+  "Look up a thesaurus definition on demand using Merriam-Webster online dictionary.
+If a region is selected use mw-thesaurus-lookup-word
+if a thing at point is not empty use mw-thesaurus-lookup-word-at-point
+otherwise as for word using mw-thesaurus-lookup-word"
   (interactive)
   (let (beg end)
     (if (use-region-p)
-	(progn
-	  (setq beg (region-beginning)
-		end (region-end))
-	  (mw-thesaurus-lookup-word beg end))
+        (progn
+          (setq beg (region-beginning)
+                end (region-end))
+          (mw-thesaurus-lookup beg end))
       (if (thing-at-point 'word)
-	  (mw-thesaurus-lookup-word-at-point (point))
-	(mw-thesaurus-lookup-word)))))
+          (mw-thesaurus-lookup-at-point (point))
+        (mw-thesaurus-lookup)))))
 
 ;;;###autoload
-(defun mw-thesaurus-lookup-word-at-point (word-point)
-  "Find word at `WORD-POINT', look it up in powerthesaurs, and replace it."
+(defun mw-thesaurus-lookup-at-point (word-point)
+  "Look up a thesaurus definition for word at point using Merriam-Webster online dictionary."
   (interactive (list (point)))
   (save-mark-and-excursion
     (unless (mw-thesaurus-is-at-the-beginning-of-word word-point)
@@ -230,11 +233,13 @@ Otherwise, user must provide additional information."
     (set-mark (point))
     (forward-word)
     (activate-mark)
-    (mw-thesaurus-lookup-word (region-beginning) (region-end))))
-	   
+    (mw-thesaurus-lookup (region-beginning) (region-end))))
+
 ;;;###autoload
-(defun mw-thesaurus-lookup-word (&optional beginning end)
-  "Look up a thesaurus definition for word at point using Merriam-Webster online dictionary."
+(defun mw-thesaurus-lookup (&optional beginning end)
+  "Look up a thesaurus definition for word using Merriam-Webster online dictionary.
+`BEGINNING' and `END' correspond to the selected text with a word to look up.
+If there is no selection provided, additional input will be required."
   (interactive
    ;; it is a simple interactive function instead of interactive "r"
    ;; because it doesn't produce an error in a buffer without a mark
