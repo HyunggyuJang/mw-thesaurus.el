@@ -40,6 +40,7 @@
 (require 'xml)
 (require 'org)
 (require 'dash)
+(require 's)
 
 (defgroup mw-thesaurus nil
   "Merriam-Webster Thesaurus"
@@ -180,7 +181,6 @@ Take XML-DATA, Returns multi-line text in ‘org-mode’ format."
           (goto-char (point-min))
           (read-only-mode))))))
 
-
 (defun mw-thesaurus-get-original-word (beginning end)
   "Get a word to look for from the user.
 
@@ -249,7 +249,6 @@ Otherwise, user must provide additional information."
              :success (cl-function
                        (lambda (&key data &allow-other-keys)
                          (mw-thesaurus--create-buffer word data))))))
-
 
 (defun mw-thesaurus--quit ()
   "Kill Merriam-Webster Thesaurus buffer."
